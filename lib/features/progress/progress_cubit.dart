@@ -72,6 +72,16 @@ class ProgressState {
     return best;
   }
 
+  /// Total number of completed workout days across all weeks.
+  int get completedDaysTotal {
+    return completedByWeek.fold<int>(0, (sum, set) => sum + set.length);
+  }
+
+  /// Total number of scheduled workout days across the program.
+  int get totalProgramDays {
+    return weeks.fold<int>(0, (sum, week) => sum + week.days.length);
+  }
+
   /// Flattens weekly completion into a single list for streak math.
   List<bool> _flattenCompletion() {
     final flattened = <bool>[];
@@ -289,6 +299,34 @@ class ProgressCubit extends Cubit<ProgressState> {
     return points;
   }
 
+  /// Builds the current list of achievements.
+  List<Achievement> buildAchievements() {
+    final week1Done = state.completedByWeek.isNotEmpty &&
+        state.completedByWeek.first.length == state.weeks.first.days.length;
+    return [
+      Achievement(
+        title: 'Week 1 Done',
+        subtitle: 'Finish all sessions in Week 1',
+        isUnlocked: week1Done,
+      ),
+      Achievement(
+        title: '10-Day Streak',
+        subtitle: 'Complete 10 consecutive days',
+        isUnlocked: state.bestStreak >= 10,
+      ),
+      Achievement(
+        title: '20-Day Streak',
+        subtitle: 'Complete 20 consecutive days',
+        isUnlocked: state.bestStreak >= 20,
+      ),
+      Achievement(
+        title: '30-Day Streak',
+        subtitle: 'Complete 30 consecutive days',
+        isUnlocked: state.bestStreak >= 30,
+      ),
+    ];
+  }
+
   static DateTime _defaultProgramStartDate() {
     final today = DateTime.now();
     final normalized = DateTime(today.year, today.month, today.day);
@@ -305,6 +343,18 @@ class ProgramDateMapping {
   final int dayIndex;
 }
 
+/// Simple achievement definition with completion status.
+class Achievement {
+  const Achievement({
+    required this.title,
+    required this.subtitle,
+    required this.isUnlocked,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool isUnlocked;
+}
 /// Single point on the daily progress trend line.
 class DailyProgressPoint {
   const DailyProgressPoint({

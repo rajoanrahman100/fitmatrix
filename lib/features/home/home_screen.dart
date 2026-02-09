@@ -9,6 +9,7 @@ import 'widgets/selected_workout.dart';
 import 'all_workouts_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../stats/stats_screen.dart';
+import '../achievements/achievements_screen.dart';
 import '../progress/progress_panel.dart';
 
 /// Main dashboard screen that composes all home widgets.
@@ -40,49 +41,151 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   const WeeklySplit(),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CalendarScreen(),
-                        ),
-                      ),
-                      icon: const Icon(Icons.calendar_month),
-                      label: const Text('Open Calendar'),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const StatsScreen(),
-                        ),
-                      ),
-                      icon: const Icon(Icons.bar_chart),
-                      label: const Text('View Progress Stats'),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AllWorkoutsScreen(),
-                        ),
-                      ),
-                      icon: const Icon(Icons.view_list),
-                      label: const Text('View All Workouts'),
-                    ),
-                  ),
+                  const _QuickActions(),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.3,
+          children: [
+            _ActionCard(
+              title: 'Calendar',
+              subtitle: 'Schedule view',
+              icon: Icons.calendar_month,
+              gradient: const [Color(0xFF56C6FF), Color(0xFF3B7BFF)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CalendarScreen()),
+              ),
+            ),
+            _ActionCard(
+              title: 'Progress',
+              subtitle: 'Stats & trends',
+              icon: Icons.bar_chart,
+              gradient: const [Color(0xFFFFC36A), Color(0xFFFF8A5C)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const StatsScreen()),
+              ),
+            ),
+            _ActionCard(
+              title: 'Achievements',
+              subtitle: 'Badges earned',
+              icon: Icons.emoji_events,
+              gradient: const [Color(0xFF9DFFB0), Color(0xFF4EDB8A)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+              ),
+            ),
+            _ActionCard(
+              title: 'All Workouts',
+              subtitle: 'Full list',
+              icon: Icons.view_list,
+              gradient: const [Color(0xFFA78BFA), Color(0xFF7C5CFF)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AllWorkoutsScreen()),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.white),
+                ),
+                const Spacer(),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withOpacity(0.88),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
