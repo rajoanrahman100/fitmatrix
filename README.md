@@ -77,6 +77,4 @@ You can tweak the theme in:
 - Timers per exercise
 - Cloud sync across devices
 
-## License
-This project is for personal use. Add a license if you plan to distribute publicly.
 
