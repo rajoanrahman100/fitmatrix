@@ -29,6 +29,7 @@ class AllWorkoutsScreen extends StatelessWidget {
                 day: day,
                 dayIndex: index,
                 isCompleted: isCompleted,
+                showEstimate: true,
                 onToggle: () =>
                     context.read<ProgressCubit>().toggleDay(index),
               );

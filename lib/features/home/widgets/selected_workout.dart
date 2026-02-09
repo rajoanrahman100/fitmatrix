@@ -32,6 +32,7 @@ class SelectedWorkout extends StatelessWidget {
               day: day,
               dayIndex: dayIndex,
               isCompleted: isCompleted,
+              showEstimate: false,
               onToggle: () => context.read<ProgressCubit>().toggleDay(dayIndex),
             ),
           ],

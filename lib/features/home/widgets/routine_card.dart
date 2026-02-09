@@ -11,16 +11,19 @@ class RoutineCard extends StatelessWidget {
     required this.dayIndex,
     required this.isCompleted,
     required this.onToggle,
+    this.showEstimate = false,
   });
 
   final WorkoutDay day;
   final int dayIndex;
   final bool isCompleted;
   final VoidCallback onToggle;
+  final bool showEstimate;
 
   /// Builds the card UI and handles navigation to details.
   @override
   Widget build(BuildContext context) {
+    final estimatedMinutes = _estimateMinutes(day);
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -98,5 +101,47 @@ class RoutineCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  int _estimateMinutes(WorkoutDay day) {
+    var minutes = 0.0;
+    var totalSets = 0;
+    final setPattern = RegExp(r'(\\d+)\\s*[x×]');
+    final minPattern = RegExp(r'(\\d+)\\s*-\\s*(\\d+)\\s*min|(\\d+)\\s*min');
+
+    for (final section in day.sections) {
+      for (final exercise in section.exercises) {
+        final detail = exercise.detail.toLowerCase();
+        final minMatch = minPattern.firstMatch(detail);
+        if (minMatch != null) {
+          final start = minMatch.group(1);
+          final end = minMatch.group(2);
+          final single = minMatch.group(3);
+          if (start != null && end != null) {
+            minutes += (int.parse(start) + int.parse(end)) / 2;
+          } else if (single != null) {
+            minutes += int.parse(single).toDouble();
+          }
+          continue;
+        }
+
+        final setMatch = setPattern.firstMatch(detail);
+        if (setMatch != null) {
+          final sets = int.tryParse(setMatch.group(1) ?? '') ?? 0;
+          totalSets += sets;
+          minutes += sets * 2.5; // average work + rest time per set
+        }
+      }
+    }
+
+    if (minutes == 0.0 && totalSets > 0) {
+      minutes = totalSets * 2.5;
+    }
+
+    if (minutes == 0.0) {
+      minutes = 8.0;
+    }
+
+    return minutes.round().clamp(5, 240);
   }
 }
