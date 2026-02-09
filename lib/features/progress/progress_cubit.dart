@@ -8,11 +8,18 @@ import '../../data/workout_data.dart';
 
 /// Immutable UI state for progress tracking.
 class ProgressState {
-  const ProgressState({required this.weeks, required this.selectedWeek, required this.selectedDay, required this.completedByWeek});
+  const ProgressState({
+    required this.weeks,
+    required this.selectedWeek,
+    required this.selectedDay,
+    required this.programStartDate,
+    required this.completedByWeek,
+  });
 
   final List<WorkoutWeek> weeks;
   final int selectedWeek;
   final int selectedDay;
+  final DateTime programStartDate;
   final List<Set<int>> completedByWeek;
 
   /// Counts weeks where every day is marked completed.
@@ -79,11 +86,17 @@ class ProgressState {
   }
 
   /// Creates a new state with selective overrides.
-  ProgressState copyWith({int? selectedWeek, int? selectedDay, List<Set<int>>? completedByWeek}) {
+  ProgressState copyWith({
+    int? selectedWeek,
+    int? selectedDay,
+    DateTime? programStartDate,
+    List<Set<int>>? completedByWeek,
+  }) {
     return ProgressState(
       weeks: weeks,
       selectedWeek: selectedWeek ?? this.selectedWeek,
       selectedDay: selectedDay ?? this.selectedDay,
+      programStartDate: programStartDate ?? this.programStartDate,
       completedByWeek: completedByWeek ?? this.completedByWeek,
     );
   }
@@ -98,6 +111,7 @@ class ProgressCubit extends Cubit<ProgressState> {
           weeks: weeks,
           selectedWeek: 0,
           selectedDay: WorkoutData.indexForWeekday(DateTime.now().weekday) ?? 0,
+          programStartDate: _defaultProgramStartDate(),
           completedByWeek: List<Set<int>>.generate(weeks.length, (_) => <int>{}),
         ),
       );
@@ -111,12 +125,14 @@ class ProgressCubit extends Cubit<ProgressState> {
 
   static const _selectedWeekKey = 'fitmatrix_selected_week';
   static const _selectedDayKey = 'fitmatrix_selected_day';
+  static const _programStartKey = 'fitmatrix_program_start';
   static const _completedKey = 'fitmatrix_completed_days';
 
   /// Loads saved progress and selection state from local storage.
   void loadFromPrefs() {
     final savedWeek = prefs.getInt(_selectedWeekKey);
     final savedDay = prefs.getInt(_selectedDayKey);
+    final savedStart = prefs.getString(_programStartKey);
     final savedJson = prefs.getString(_completedKey);
 
     List<Set<int>> completed = state.completedByWeek;
@@ -135,8 +151,17 @@ class ProgressCubit extends Cubit<ProgressState> {
 
     final maxDayIndex = WorkoutData.weekdayLabels.length - 1;
     final resolvedDay = savedDay != null && savedDay >= 0 && savedDay <= maxDayIndex ? savedDay : state.selectedDay;
+    final resolvedStart = savedStart != null ? DateTime.tryParse(savedStart) : state.programStartDate;
+    if (savedStart == null && resolvedStart != null) {
+      prefs.setString(_programStartKey, resolvedStart.toIso8601String());
+    }
 
-    emit(state.copyWith(selectedWeek: savedWeek ?? state.selectedWeek, selectedDay: resolvedDay, completedByWeek: completed));
+    emit(state.copyWith(
+      selectedWeek: savedWeek ?? state.selectedWeek,
+      selectedDay: resolvedDay,
+      programStartDate: resolvedStart ?? state.programStartDate,
+      completedByWeek: completed,
+    ));
   }
 
   /// Updates the selected week and resets the selected day to today.
@@ -146,6 +171,25 @@ class ProgressCubit extends Cubit<ProgressState> {
     emit(state.copyWith(selectedWeek: index, selectedDay: resolvedDay));
     prefs.setInt(_selectedWeekKey, index);
     prefs.setInt(_selectedDayKey, resolvedDay);
+  }
+
+  /// Updates the program start date and persists it.
+  void setProgramStartDate(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    emit(state.copyWith(programStartDate: normalized));
+    prefs.setString(_programStartKey, normalized.toIso8601String());
+  }
+
+  /// Selects a week/day based on a calendar date in the program range.
+  void selectByDate(DateTime date) {
+    final mapping = mapDateToProgram(date);
+    if (mapping == null) {
+      return;
+    }
+    emit(state.copyWith(
+      selectedWeek: mapping.weekIndex,
+      selectedDay: mapping.dayIndex,
+    ));
   }
 
   /// Sets the active day within the currently selected week.
@@ -199,4 +243,77 @@ class ProgressCubit extends Cubit<ProgressState> {
     final encoded = completed.map((week) => week.toList()).toList();
     return jsonEncode(encoded);
   }
+
+  /// Maps a calendar date to the program week/day indices.
+  ProgramDateMapping? mapDateToProgram(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final start = state.programStartDate;
+    final diffDays = normalized.difference(start).inDays;
+    if (diffDays < 0) {
+      return null;
+    }
+    final weekIndex = diffDays ~/ 7;
+    final dayIndex = diffDays % 7;
+    if (weekIndex < 0 || weekIndex >= state.weeks.length) {
+      return null;
+    }
+    if (dayIndex >= state.weeks.first.days.length) {
+      return null;
+    }
+    return ProgramDateMapping(weekIndex: weekIndex, dayIndex: dayIndex);
+  }
+
+  /// Builds a daily completion series from the program start date.
+  List<DailyProgressPoint> buildDailyProgressSeries() {
+    final points = <DailyProgressPoint>[];
+    final totalWeeks = state.weeks.length;
+    final daysPerWeek = state.weeks.first.days.length;
+    final totalDays = totalWeeks * daysPerWeek;
+
+    var completedCount = 0;
+    for (var dayOffset = 0; dayOffset < totalDays; dayOffset++) {
+      final weekIndex = dayOffset ~/ 7;
+      final dayIndex = dayOffset % 7;
+      final isCompleted = state.completedByWeek[weekIndex].contains(dayIndex);
+      if (isCompleted) {
+        completedCount++;
+      }
+      final date =
+          state.programStartDate.add(Duration(days: dayOffset));
+      points.add(DailyProgressPoint(
+        date: date,
+        completedTotal: completedCount,
+        completedToday: isCompleted,
+      ));
+    }
+    return points;
+  }
+
+  static DateTime _defaultProgramStartDate() {
+    final today = DateTime.now();
+    final normalized = DateTime(today.year, today.month, today.day);
+    final diff = (normalized.weekday - DateTime.saturday) % 7;
+    return normalized.subtract(Duration(days: diff));
+  }
+}
+
+/// Maps a calendar date to the training week and day indices.
+class ProgramDateMapping {
+  const ProgramDateMapping({required this.weekIndex, required this.dayIndex});
+
+  final int weekIndex;
+  final int dayIndex;
+}
+
+/// Single point on the daily progress trend line.
+class DailyProgressPoint {
+  const DailyProgressPoint({
+    required this.date,
+    required this.completedTotal,
+    required this.completedToday,
+  });
+
+  final DateTime date;
+  final int completedTotal;
+  final bool completedToday;
 }
