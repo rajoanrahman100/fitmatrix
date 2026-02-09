@@ -10,6 +10,7 @@ import 'all_workouts_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../stats/stats_screen.dart';
 import '../achievements/achievements_screen.dart';
+import '../photo/photo_progress_screen.dart';
 import '../progress/progress_panel.dart';
 
 /// Main dashboard screen that composes all home widgets.
@@ -71,9 +72,9 @@ class _QuickActions extends StatelessWidget {
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.35,
           children: [
             _ActionCard(
               title: 'Calendar',
@@ -109,6 +110,15 @@ class _QuickActions extends StatelessWidget {
               gradient: const [Color(0xFFA78BFA), Color(0xFF7C5CFF)],
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AllWorkoutsScreen()),
+              ),
+            ),
+            _ActionCard(
+              title: 'Photo Progress',
+              subtitle: 'Front/side/back',
+              icon: Icons.photo_camera,
+              gradient: const [Color(0xFFFF7A7A), Color(0xFFB94B9B)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PhotoProgressScreen()),
               ),
             ),
           ],
@@ -161,34 +171,34 @@ class _ActionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: Colors.white),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                const Spacer(),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withOpacity(0.88),
-                      ),
-                ),
+                child: Icon(icon, color: Colors.white),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withOpacity(0.88),
+                    ),
+              ),
               ],
             ),
           ),

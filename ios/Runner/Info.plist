@@ -30,6 +30,10 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FitMatrix needs camera access to capture progress photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FitMatrix needs photo library access to select progress photos.</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIStatusBarHidden</key>
