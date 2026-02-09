@@ -15,8 +15,6 @@ FitMatrix is a Flutter workout companion built around a 7‑week push/pull/legs 
 - Progress stats screen with weekly bars + daily trend line
 - Estimated time shown on All Workouts list cards
 - Local persistence with `shared_preferences`
-- Native splash + in‑app splash with logo animation
-- App icon generated from the FitMatrix logo
 
 ## Tech Stack
 - Flutter (Material 3)
