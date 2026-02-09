@@ -30,27 +30,17 @@ class WeekSelector extends StatelessWidget {
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(18),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.35),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ]
-                        : [],
                   ),
-                  child: Text(
-                    'Week ${index + 1}',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: isSelected
-                              ? Colors.black
-                              : Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  child: Center(
+                    child: Text(
+                      'Week ${index + 1}',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: isSelected
+                                ? Colors.black
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
                 ),
               );

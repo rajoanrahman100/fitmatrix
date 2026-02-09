@@ -22,6 +22,11 @@ ThemeData buildAppTheme() {
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFEAF2FF),
+      ),
     ),
   );
 }
