@@ -80,5 +80,3 @@ You can tweak the theme in:
 ## License
 This project is for personal use. Add a license if you plan to distribute publicly.
 
----
-If you’d like, I can also add a `LICENSE` file and GitHub badges.
