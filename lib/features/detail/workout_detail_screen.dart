@@ -235,13 +235,15 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
   int _estimateMinutes(WorkoutDay day) {
     var minutes = 0.0;
-    var totalSets = 0;
     final setPattern = RegExp(r'(\\d+)\\s*[x×]');
+    final repPattern = RegExp(r'(\\d+)\\s*-\\s*(\\d+)'); // reps range like 8-10
     final minPattern = RegExp(r'(\\d+)\\s*-\\s*(\\d+)\\s*min|(\\d+)\\s*min');
 
     for (final section in day.sections) {
       for (final exercise in section.exercises) {
         final detail = exercise.detail.toLowerCase();
+
+        // explicit minute ranges
         final minMatch = minPattern.firstMatch(detail);
         if (minMatch != null) {
           final start = minMatch.group(1);
@@ -256,22 +258,59 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         }
 
         final setMatch = setPattern.firstMatch(detail);
-        if (setMatch != null) {
-          final sets = int.tryParse(setMatch.group(1) ?? '') ?? 0;
-          totalSets += sets;
-          minutes += sets * 2.5;
+        if (setMatch == null) {
+          continue;
+        }
+        final sets = int.tryParse(setMatch.group(1) ?? '') ?? 0;
+        if (sets == 0) {
+          continue;
+        }
+
+        // reps range for intensity heuristics
+        double repsAvg = 10;
+        final repMatch = repPattern.firstMatch(detail);
+        if (repMatch != null) {
+          final r1 = int.tryParse(repMatch.group(1) ?? '');
+          final r2 = int.tryParse(repMatch.group(2) ?? '');
+          if (r1 != null && r2 != null) {
+            repsAvg = (r1 + r2) / 2.0;
+          }
+        }
+
+        // work time per set (seconds) based on reps
+        double workSeconds;
+        if (repsAvg <= 6) {
+          workSeconds = 50;
+        } else if (repsAvg <= 10) {
+          workSeconds = 45;
+        } else if (repsAvg <= 15) {
+          workSeconds = 40;
+        } else {
+          workSeconds = 35;
+        }
+
+        // rest time per set (seconds) based on intensity
+        double restSeconds;
+        if (repsAvg <= 6) {
+          restSeconds = 120;
+        } else if (repsAvg <= 10) {
+          restSeconds = 90;
+        } else if (repsAvg <= 15) {
+          restSeconds = 60;
+        } else {
+          restSeconds = 45;
+        }
+
+        minutes += sets * ((workSeconds + restSeconds) / 60.0);
+
+        if (detail.contains('drop')) {
+          minutes += 1.0; // drop sets take extra time
         }
       }
     }
 
-    if (minutes == 0.0 && totalSets > 0) {
-      minutes = totalSets * 2.5;
-    }
-
-    if (minutes == 0.0) {
-      minutes = 8.0;
-    }
-
-    return minutes.round().clamp(5, 240);
+    // small buffer for transitions / setup
+    minutes += 5.0;
+    return minutes.round().clamp(45, 60);
   }
 }
