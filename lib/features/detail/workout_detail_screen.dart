@@ -39,6 +39,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   /// Builds the detail screen with exercises and action button.
   @override
   Widget build(BuildContext context) {
+    final estimatedMinutes = _estimateMinutes(widget.day);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.day.title),
@@ -48,26 +49,25 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         children: [
           Text(
             widget.day.subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white70,fontSize: 18,fontWeight: FontWeight.w600
                 ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () async {
-                context
-                    .read<ProgressCubit>()
-                    .setDayCompleted(widget.dayIndex, true);
-                await _showSuccessOverlay(context);
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              icon: const Icon(Icons.check_circle),
-              label: const Text('Mark All Done'),
-            ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Chip(
+                label: Text('~$estimatedMinutes min'),
+                avatar: const Icon(Icons.timer, size: 16),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                side: const BorderSide(color: Colors.white12),
+                labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white70,
+                    ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           for (final section in widget.day.sections)
@@ -114,6 +114,23 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 ],
               ),
             ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                context
+                    .read<ProgressCubit>()
+                    .setDayCompleted(widget.dayIndex, true);
+                await _showSuccessOverlay(context);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Mark All Done'),
+            ),
+          ),
         ],
       ),
     );
@@ -214,5 +231,47 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       Navigator.of(context, rootNavigator: true).pop();
     }
     await dialogFuture;
+  }
+
+  int _estimateMinutes(WorkoutDay day) {
+    var minutes = 0.0;
+    var totalSets = 0;
+    final setPattern = RegExp(r'(\\d+)\\s*[x×]');
+    final minPattern = RegExp(r'(\\d+)\\s*-\\s*(\\d+)\\s*min|(\\d+)\\s*min');
+
+    for (final section in day.sections) {
+      for (final exercise in section.exercises) {
+        final detail = exercise.detail.toLowerCase();
+        final minMatch = minPattern.firstMatch(detail);
+        if (minMatch != null) {
+          final start = minMatch.group(1);
+          final end = minMatch.group(2);
+          final single = minMatch.group(3);
+          if (start != null && end != null) {
+            minutes += (int.parse(start) + int.parse(end)) / 2;
+          } else if (single != null) {
+            minutes += int.parse(single).toDouble();
+          }
+          continue;
+        }
+
+        final setMatch = setPattern.firstMatch(detail);
+        if (setMatch != null) {
+          final sets = int.tryParse(setMatch.group(1) ?? '') ?? 0;
+          totalSets += sets;
+          minutes += sets * 2.5;
+        }
+      }
+    }
+
+    if (minutes == 0.0 && totalSets > 0) {
+      minutes = totalSets * 2.5;
+    }
+
+    if (minutes == 0.0) {
+      minutes = 8.0;
+    }
+
+    return minutes.round().clamp(5, 240);
   }
 }
