@@ -11,6 +11,7 @@ import '../calendar/calendar_screen.dart';
 import '../stats/stats_screen.dart';
 import '../achievements/achievements_screen.dart';
 import '../photo/photo_progress_screen.dart';
+import '../nutrition/nutrition_screen.dart';
 import '../progress/progress_panel.dart';
 
 /// Main dashboard screen that composes all home widgets.
@@ -119,6 +120,15 @@ class _QuickActions extends StatelessWidget {
               gradient: const [Color(0xFFFF7A7A), Color(0xFFB94B9B)],
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PhotoProgressScreen()),
+              ),
+            ),
+            _ActionCard(
+              title: 'Nutrition',
+              subtitle: 'Meal guidance',
+              icon: Icons.restaurant_menu,
+              gradient: const [Color(0xFF56C6FF), Color(0xFF1FB6FF)],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NutritionScreen()),
               ),
             ),
           ],
