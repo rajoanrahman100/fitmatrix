@@ -118,6 +118,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
               onPressed: () async {
                 context
                     .read<ProgressCubit>()
